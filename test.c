@@ -21,7 +21,7 @@ static void write_script(const char* path, const char* msg) {
 static void try_spawn(const char* label, int use_p, const char* exe, const char* wd) {
   posix_spawn_file_actions_t fa;
   posix_spawn_file_actions_init(&fa);
-  posix_spawn_file_actions_addchdir(&fa, wd);
+  posix_spawn_file_actions_addchdir_np(&fa, wd);
   char* argv[] = {(char*)exe, NULL};
   pid_t pid;
   fflush(stdout);
