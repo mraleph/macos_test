@@ -1,0 +1,29 @@
+name: test
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Environment
+        run: |
+          sw_vers
+          clang --version
+          xcrun --show-sdk-path
+
+      - name: Build
+        # posix_spawn_file_actions_addchdir is macOS 26+; use the _np variant
+        # (available since 10.15) so the binary runs on macOS 15.
+        run: |
+          clang -Wall -mmacosx-version-min=15.0 \
+            -Dposix_spawn_file_actions_addchdir=posix_spawn_file_actions_addchdir_np \
+            -o test test.c
+
+      - name: Run
+        run: ./test
