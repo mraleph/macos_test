@@ -13,16 +13,16 @@ static void write_script(const char* path, const char* msg) {
   FILE* f = fopen(path, "w");
   fprintf(f, "#!/bin/sh\n"
     "MY_PATH=\"${BASH_SOURCE[0]}\"\n"
-    "echo \"  -> ran ($MY_PATH) %s in $(pwd -P)\"\n", msg);
+    "echo \"  -> ran ($MY_PATH) [$1] %s in $(pwd -P)\"\n", msg);
   fclose(f);
   chmod(path, 0755);
 }
 
-static void try_spawn(const char* label, int use_p, const char* exe, const char* wd) {
+static void try_spawn(const char* label, int use_p, const char* exe, const char* wd, const char* msg) {
   posix_spawn_file_actions_t fa;
   posix_spawn_file_actions_init(&fa);
   posix_spawn_file_actions_addchdir_np(&fa, wd);
-  char* argv[] = {(char*)exe, NULL};
+  char* argv[] = {(char*)exe, msg, NULL};
   pid_t pid;
   fflush(stdout);
   int rc = use_p ? posix_spawnp(&pid, exe, &fa, NULL, argv, environ)
@@ -48,13 +48,17 @@ int main(void) {
   write_script(tool, "WORK/tool.sh");
   chdir(root);
 
-  try_spawn("posix_spawnp ./tool.sh", 1, "./tool.sh", work);
-  try_spawn("posix_spawn  ./tool.sh", 0, "./tool.sh", work);
+  try_spawn("posix_spawnp ./tool.sh", 1, "./tool.sh", work, "v1");
+  puts("\n\n");
+  try_spawn("posix_spawn  ./tool.sh", 0, "./tool.sh", work, "v2");
+  puts("\n\n");
 
   snprintf(decoy, sizeof decoy, "%s/tool.sh", root);
   write_script(decoy, "PARENT-CWD/tool.sh (decoy)");
   printf("-- with a decoy ./tool.sh in the parent cwd:\n");
-  try_spawn("posix_spawnp ./tool.sh", 1, "./tool.sh", work);
-  try_spawn("posix_spawn  ./tool.sh", 0, "./tool.sh", work);
+  try_spawn("posix_spawnp ./tool.sh", 1, "./tool.sh", work, "v3");
+  puts("\n\n");
+  try_spawn("posix_spawn  ./tool.sh", 0, "./tool.sh", work, "v4");
+  puts("\n\n");
   return 0;
 }
